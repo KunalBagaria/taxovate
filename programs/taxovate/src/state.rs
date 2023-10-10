@@ -6,6 +6,7 @@ use std::mem::size_of;
 pub struct TaxAccount {
     pub tax_paid: u64,
     pub taxed_income: u64,
+    pub claims_count: u64,
 }
 
 impl TaxAccount {
@@ -19,6 +20,7 @@ pub struct Claim {
     pub tax_code: String,
     pub amount: u64,
     pub proof: String,
+    pub reviewed: bool,
 }
 
 impl Claim {
