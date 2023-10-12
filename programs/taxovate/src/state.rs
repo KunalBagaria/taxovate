@@ -16,13 +16,20 @@ impl TaxAccount {
 #[account]
 #[derive(Default)]
 pub struct Claim {
+    pub id: u64,
     pub tax_account: Pubkey,
     pub tax_code: String,
-    pub amount: u64,
+    pub claim_amount: u64,
+    pub on_income_amount: u64,
     pub proof: String,
     pub reviewed: bool,
+    pub approval: String,
 }
 
 impl Claim {
   pub const LEN: usize = 8 + size_of::<Self>();
 }
+
+pub const GOV_ACCOUNTS: [&str; 1] = [
+  "GpEetfasA7J3kbERkBAqqas8vTTfTTkyUdSrS4DKQrq2"
+];

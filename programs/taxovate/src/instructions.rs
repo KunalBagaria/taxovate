@@ -42,3 +42,23 @@ pub struct CreateClaim<'info> {
     pub rent: Sysvar<'info, Rent>,
     pub system_program: Program<'info, System>,
 }
+
+#[derive(Accounts)]
+#[instruction(id: u64, approve: bool)]
+pub struct ReviewClaim<'info> {
+    #[account(mut, seeds = [b"user".as_ref()], bump)]
+    pub tax_account: Account<'info, TaxAccount>,
+
+    #[account(mut, seeds = [
+      b"claim".as_ref(),
+      tax_account.key().as_ref(),
+      &id.to_le_bytes()
+    ], bump)]
+    pub claim: Account<'info, Claim>,
+
+    #[account(mut)]
+    pub user: Signer<'info>,
+
+    pub rent: Sysvar<'info, Rent>,
+    pub system_program: Program<'info, System>,
+}

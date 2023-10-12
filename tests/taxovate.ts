@@ -13,7 +13,7 @@ describe("taxovate", () => {
     program.programId
   );
 
-  it("Should initialize a tax account", async () => {
+  async function initialize() {
     try {
       const taxAccountData = await program.account.taxAccount.fetch(taxAccount);
       console.log("Tax account data", taxAccountData);
@@ -25,33 +25,63 @@ describe("taxovate", () => {
         })
         .rpc();
       console.log("Your transaction signature", tx);
+      const taxAccountData = await program.account.taxAccount.fetch(taxAccount);
+      console.log("Tax account data", taxAccountData);
     }
-  });
+  }
 
-  it("Should create a tax deduction claim", async () => {
+  async function createClaim(log = true) {
     const taxAccountData = await program.account.taxAccount.fetch(taxAccount);
     const newClaimId = new BN(taxAccountData.claimsCount).add(new BN(1));
-
     const [claimAccount] = await anchor.web3.PublicKey.findProgramAddressSync(
       [
         Buffer.from("claim"),
         taxAccount.toBytes(),
-        newClaimId.toArrayLike(Buffer, "le", 8)
+        newClaimId.toArrayLike(Buffer, "le", 8),
       ],
       program.programId
     );
-
-    console.log("Claim account", claimAccount.toBase58());
-
-    const tx = await program.methods.createClaim(newClaimId, "420", new BN(0), "No proof needed :)")
+    const tx = await program.methods
+      .createClaim(
+        newClaimId,
+        "420",
+        new BN(0),
+        new BN(0),
+        "No proof needed :)"
+      )
       .accounts({
         taxAccount,
         claim: claimAccount,
       })
       .rpc();
-    console.log("Your transaction signature", tx);
+    if (!log) console.log("Your transaction signature", tx);
     const claimAccountData = await program.account.claim.fetch(claimAccount);
-    console.log("Claim account data", claimAccountData);
+    if (!log) console.log("Claim account data", claimAccountData);
+    return claimAccount;
+  }
+
+  async function reviewClaim(approve: boolean, claimAccount: anchor.web3.PublicKey) {
+    const claimAccountData = await program.account.claim.fetch(claimAccount);
+    const tx = await program.methods.reviewClaim(claimAccountData.id, approve).accounts({
+      taxAccount,
+      claim: claimAccount,
+    }).rpc();
+    console.log("Your transaction signature", tx);
+    const claimAccountDataReviewed = await program.account.claim.fetch(claimAccount);
+    console.log("Claim account data after review", claimAccountDataReviewed);
+  }
+
+  it("Should initialize a tax account", async () => {
+    await initialize();
+  });
+
+  it("Should create a tax deduction claim", async () => {
+    await createClaim();
+  });
+
+  it("Should approve a tax deduction claim", async () => {
+    const claimAccount = await createClaim(false);
+    await reviewClaim(true, claimAccount);
   });
 
 });
