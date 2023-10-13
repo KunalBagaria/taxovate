@@ -1,12 +1,13 @@
-use crate::state::{Claim, TaxAccount};
 use anchor_lang::prelude::*;
+use anchor_spl::token::{Token, TokenAccount};
+use crate::state::{Claim, TaxAccount};
 
 #[derive(Accounts)]
 pub struct Initialize<'info> {
     #[account(
         init,
         payer = user,
-        seeds = [b"user".as_ref()],
+        seeds = [b"user".as_ref(), user.key().as_ref()],
         bump,
         space = TaxAccount::LEN
     )]
@@ -18,9 +19,28 @@ pub struct Initialize<'info> {
 }
 
 #[derive(Accounts)]
+#[instruction(amount: u64)]
+pub struct Withdraw<'info> {
+    #[account(mut, seeds = [b"user".as_ref(), user.key().as_ref()], bump)]
+    pub tax_account: Account<'info, TaxAccount>,
+
+    #[account(mut)]
+    pub from_ata: Account<'info, TokenAccount>,
+
+    #[account(mut)]
+    pub to_ata: Account<'info, TokenAccount>,
+
+    #[account(mut)]
+    pub gov_ata: Account<'info, TokenAccount>,
+
+    pub user: Signer<'info>,
+    pub token_program: Program<'info, Token>,
+}
+
+#[derive(Accounts)]
 #[instruction(id: u64, tax_code: String, amount: u64, proof: String)]
 pub struct CreateClaim<'info> {
-    #[account(mut, seeds = [b"user".as_ref()], bump)]
+    #[account(mut, seeds = [b"user".as_ref(), user.key().as_ref()], bump)]
     pub tax_account: Account<'info, TaxAccount>,
 
     #[account(
@@ -46,7 +66,7 @@ pub struct CreateClaim<'info> {
 #[derive(Accounts)]
 #[instruction(id: u64, approve: bool)]
 pub struct ReviewClaim<'info> {
-    #[account(mut, seeds = [b"user".as_ref()], bump)]
+    #[account(mut, seeds = [b"user".as_ref(), user.key().as_ref()], bump)]
     pub tax_account: Account<'info, TaxAccount>,
 
     #[account(mut, seeds = [

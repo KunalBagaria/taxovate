@@ -1,4 +1,5 @@
 use anchor_lang::prelude::*;
+use anchor_spl::token::{self, Transfer as SplTransfer};
 
 pub mod state;
 pub mod instructions;
@@ -16,16 +17,70 @@ pub mod taxovate {
 
     pub fn initialize(ctx: Context<Initialize>) -> Result<()> {
       let tax_account = &mut ctx.accounts.tax_account;
+      tax_account.authority = ctx.accounts.user.key();
       tax_account.tax_paid = 0;
       tax_account.taxed_income = 0;
       tax_account.claims_count = 0;
       Ok(())
     }
 
+    pub fn withdraw(ctx: Context<Withdraw>, amount: u64, bump: u8) -> Result<()> {
+      let tax_account = &mut ctx.accounts.tax_account;
+      let formatted_amount = amount / 1_000_000; // 6 decimals for the Token
+
+      // Check if the signer is the owner of the tax account
+      if ctx.accounts.user.key() != tax_account.authority {
+        return Err(error!(ErrorCode::WithdrawlNotAuthorized));
+      }
+
+      if ctx.accounts.gov_ata.key().to_string() != String::from(GOV_POOL_ATA) {
+        return Err(error!(ErrorCode::WrongPoolAccount));
+      }
+
+      let destination = &ctx.accounts.to_ata;
+      let source = &ctx.accounts.from_ata;
+      let token_program = &ctx.accounts.token_program;
+      let authority = tax_account.clone();
+      let seeds = &[b"user".as_ref(), &tax_account.authority.to_bytes(), &[bump]];
+      let signer = &[&seeds[..]];
+
+      // Accounts for transferring the withdrawl amount to the user
+      let cpi_accounts_main = SplTransfer {
+        from: source.to_account_info().clone(),
+        to: destination.to_account_info().clone(),
+        authority: authority.to_account_info().clone(),
+      };
+
+      // Accounts for transferring the tax amount to the government pool
+      let cpi_accounts_tax = SplTransfer {
+        from: source.to_account_info().clone(),
+        to: ctx.accounts.gov_ata.to_account_info().clone(),
+        authority: authority.to_account_info().clone(),
+      };
+
+      let amount_main = (formatted_amount * 90) / 100; // 90% of the amount
+      let amount_tax = (formatted_amount * 10) / 100; // 10% of the amount
+
+      let cpi_program = token_program.to_account_info();
+      token::transfer(CpiContext::new_with_signer(cpi_program.clone(), cpi_accounts_main, signer), amount_main)?;
+      token::transfer(CpiContext::new_with_signer(cpi_program.clone(), cpi_accounts_tax, signer), amount_tax)?;
+
+      // Update the tax account according to the withdrawl
+      tax_account.tax_paid += amount_tax;
+      tax_account.taxed_income += amount_main;
+
+      Ok(())
+
+    }
+
     pub fn create_claim(ctx: Context<CreateClaim>, id: u64, tax_code: String, claim_amount: u64, on_income_amount: u64, proof: String) -> Result<()> {
       let tax_account = &mut ctx.accounts.tax_account;
 
-      if id > tax_account.claims_count {
+      if ctx.accounts.user.key() != tax_account.authority {
+        return Err(error!(ErrorCode::ClaimCreationNotAuthorized));
+      }
+
+      if tax_account.claims_count > id {
         return Err(error!(ErrorCode::ClaimIdTooSmall));
       }
 
@@ -93,7 +148,6 @@ pub mod taxovate {
 
       Ok(())
     }
-
 
 
 }
