@@ -4,6 +4,7 @@ use anchor_spl::token::{self, Transfer as SplTransfer};
 pub mod state;
 pub mod instructions;
 pub mod error;
+pub mod slab;
 
 use instructions::*;
 use error::ErrorCode;
@@ -13,6 +14,8 @@ declare_id!("5FCuQ3GBv3d1GWropp9t1fW6yLSnqBdSKFU3yfSCjC63");
 
 #[program]
 pub mod taxovate {
+    use crate::slab::get_tax_percentage;
+
     use super::*;
 
     pub fn initialize(ctx: Context<Initialize>) -> Result<()> {
@@ -26,7 +29,7 @@ pub mod taxovate {
 
     pub fn withdraw(ctx: Context<Withdraw>, amount: u64, bump: u8) -> Result<()> {
       let tax_account = &mut ctx.accounts.tax_account;
-      let formatted_amount = amount / 1_000_000; // 6 decimals for the Token
+      let transaction_amount = amount / 1_000_000; // 6 decimals for the Token
 
       // Check if the signer is the owner of the tax account
       if ctx.accounts.user.key() != tax_account.authority {
@@ -58,16 +61,37 @@ pub mod taxovate {
         authority: authority.to_account_info().clone(),
       };
 
-      let amount_main = (formatted_amount * 90) / 100; // 90% of the amount
-      let amount_tax = (formatted_amount * 10) / 100; // 10% of the amount
+      let total_taxable_income = tax_account.taxed_income + transaction_amount;
+      let tax_percentage_applicable = get_tax_percentage(total_taxable_income);
+
+      // Weird bug: why is this 0?
+      let total_tax_amount = (tax_percentage_applicable / 100) * total_taxable_income;
+
+      let applicable_tax = if total_tax_amount == 0 {
+        0
+      } else {
+        total_tax_amount - tax_account.tax_paid
+      };
+
+      let amount_main = transaction_amount - applicable_tax;
 
       let cpi_program = token_program.to_account_info();
+      token::transfer(CpiContext::new_with_signer(cpi_program.clone(), cpi_accounts_tax, signer), applicable_tax)?;
       token::transfer(CpiContext::new_with_signer(cpi_program.clone(), cpi_accounts_main, signer), amount_main)?;
-      token::transfer(CpiContext::new_with_signer(cpi_program.clone(), cpi_accounts_tax, signer), amount_tax)?;
 
       // Update the tax account according to the withdrawl
-      tax_account.tax_paid += amount_tax;
+      tax_account.tax_paid += applicable_tax;
       tax_account.taxed_income += amount_main;
+
+      msg!("Previously taxed income: {}", tax_account.taxed_income);
+      msg!("Total taxable income: {}", total_taxable_income);
+      msg!("Tax percentage applicable: {}", tax_percentage_applicable);
+
+      msg!("Total tax amount: {}", total_tax_amount);
+      msg!("Tax paid before: {}", tax_account.tax_paid);
+
+      msg!("Applicable tax now: {}", applicable_tax);
+      msg!("Amount transferred: {}", amount_main);
 
       Ok(())
 

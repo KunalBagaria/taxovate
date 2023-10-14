@@ -9,7 +9,7 @@ describe("taxovate", () => {
   anchor.setProvider(anchor.AnchorProvider.env());
 
   // Replace as appropriate
-  const tokenMint = new anchor.web3.PublicKey("DEazJwggeDv6yvWgHUJp8BV5ZaDPRGjzuHEZWHjqCtbH");
+  const tokenMint = new anchor.web3.PublicKey("4mam4mhRsaRogML5os2uRSFs4MgkCdQghkwMZk8YMN1y");
   const govPoolOwner = new anchor.web3.PublicKey("AjsnLCea7MuBTu5YPi9FfegSJWGz2TByoMq6sLpH1PPr");
 
   const program = anchor.workspace.Taxovate as Program<Taxovate>;
@@ -31,6 +31,7 @@ describe("taxovate", () => {
         })
         .rpc();
       const taxAccountData = await program.account.taxAccount.fetch(taxAccount);
+      if (log) console.log("Tax account PDA", taxAccount);
       if (log) console.log("Tax account data", taxAccountData);
     }
   }
@@ -98,7 +99,7 @@ describe("taxovate", () => {
   });
 
   it("Should make a withdrawal", async () => {
-    await withdrawMoney(100, true);
+    await withdrawMoney(300000, true);
   });
 
   it("Should create a tax deduction claim", async () => {
