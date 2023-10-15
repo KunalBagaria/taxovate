@@ -17,7 +17,8 @@ main {
 }
 
 .content {
-  @apply w-full h-screen flex items-center flex-col;
+  @apply w-full min-h-screen flex items-center flex-col;
+  @apply mb-24;
 }
 
 .max-w-container {
@@ -41,4 +42,8 @@ main {
 
 .refresh-btn {
   @apply mt-4;
+}
+
+.claims-body {
+  @apply gap-4;
 }

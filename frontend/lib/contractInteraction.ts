@@ -3,15 +3,17 @@ import { BN } from "bn.js";
 import { Program } from "@coral-xyz/anchor";
 import { Connection, PublicKey } from "@solana/web3.js";
 import { AnchorWallet } from "@solana/wallet-adapter-react";
+import { getAssociatedTokenAddress, TOKEN_PROGRAM_ID } from "@solana/spl-token";
 import {
-  getAssociatedTokenAddress,
-  TOKEN_PROGRAM_ID
-} from "@solana/spl-token";
-import { TOKEN_MINT, GOV_POOL_OWNER, TAXOVATE_PROGRAM_ID } from "#/lib/constants";
+  TOKEN_MINT,
+  GOV_POOL_OWNER,
+  TAXOVATE_PROGRAM_ID,
+} from "#/lib/constants";
 import { IDL } from "#/lib/IDL";
+import toast from "react-hot-toast";
 
 function getProgram(wallet: AnchorWallet) {
-  const connection = new Connection('https://api.devnet.solana.com');
+  const connection = new Connection("https://api.devnet.solana.com");
   const provider = new anchor.AnchorProvider(connection, wallet, {
     commitment: "confirmed",
   });
@@ -48,6 +50,7 @@ async function initialize(log = true, wallet: AnchorWallet) {
     if (log) console.log("Tax account PDA", taxAccount.toBase58());
     if (log) console.log("Tax paid:", taxAccountData.taxPaid.toNumber());
     if (log) console.log("On Income:", taxAccountData.taxedIncome.toNumber());
+    toast.success("Tax Account already initialized", { position: "top-left" });
   } catch (e) {
     const program = getProgram(wallet);
     const { taxAccount } = await getTaxAccount(wallet);
@@ -58,10 +61,15 @@ async function initialize(log = true, wallet: AnchorWallet) {
       })
       .rpc();
     console.log("Initialize Tx", tx);
+    window.open(
+      "https://explorer.solana.com/tx/" + tx + "?cluster=devnet",
+      "_blank"
+    );
+    toast.success("Initialized Tax Account");
   }
 }
 
-async function createClaim(log = true, wallet: AnchorWallet) {
+async function createClaim(log = true, wallet: AnchorWallet, claimAmount: number, incomeAmount: number, taxCode: string, proof: string) {
   const program = getProgram(wallet);
   const { taxAccount } = await getTaxAccount(wallet);
   const taxAccountData = await program.account.taxAccount.fetch(taxAccount);
@@ -77,21 +85,21 @@ async function createClaim(log = true, wallet: AnchorWallet) {
   const tx = await program.methods
     .createClaim(
       newClaimId, // New Claim ID
-      "420", // Tax Code applicable for deduction
-      new BN(10), // Claimed amount
-      new BN(100), // For the income amount
-      "No proof needed :)" // Proof of claim
+      taxCode, // Tax Code applicable for deduction
+      new BN(claimAmount), // Claimed amount
+      new BN(incomeAmount), // For the income amount
+      proof // Proof of claim
     )
     .accounts({
       taxAccount,
       claim: claimAccount,
     })
-    .rpc()
-    .catch((e) => {
-      console.log(e);
-    });
-  const claimAccountData = await program.account.claim.fetch(claimAccount);
-  if (log) console.log("Claim account data", claimAccountData);
+    .rpc();
+  toast.success("Claim created", { position: "top-left" });
+  window.open(
+    "https://explorer.solana.com/tx/" + tx + "?cluster=devnet",
+    "_blank"
+  );
   return claimAccount;
 }
 
@@ -117,7 +125,11 @@ async function reviewClaim(
     console.log("Claim account data after review", claimAccountDataReviewed);
 }
 
-async function withdrawMoney(_amount: number, log = true, wallet: AnchorWallet) {
+async function withdrawMoney(
+  _amount: number,
+  log = true,
+  wallet: AnchorWallet
+) {
   const program = getProgram(wallet);
   const { taxAccount, bump } = await getTaxAccount(wallet);
   const amount = new BN(_amount);
@@ -126,11 +138,11 @@ async function withdrawMoney(_amount: number, log = true, wallet: AnchorWallet) 
     taxAccount,
     true
   );
-  const userATA = await getAssociatedTokenAddress(
+  const userATA = await getAssociatedTokenAddress(TOKEN_MINT, wallet.publicKey);
+  const govPoolATA = await getAssociatedTokenAddress(
     TOKEN_MINT,
-    wallet.publicKey
+    GOV_POOL_OWNER
   );
-  const govPoolATA = await getAssociatedTokenAddress(TOKEN_MINT, GOV_POOL_OWNER);
   const tx = await program.methods
     .withdraw(amount, bump)
     .accounts({
@@ -141,11 +153,16 @@ async function withdrawMoney(_amount: number, log = true, wallet: AnchorWallet) 
       govAta: govPoolATA,
     })
     .rpc();
+  toast.success("Withdrawl Successful", { position: "top-left" });
   if (log) console.log("Withdrawl Tx", tx);
+  window.open(
+    "https://explorer.solana.com/tx/" + tx + "?cluster=devnet",
+    "_blank"
+  );
 }
 
 async function getTokenBalance(publicKey: PublicKey) {
-  const connection = new Connection('https://api.devnet.solana.com');
+  const connection = new Connection("https://api.devnet.solana.com");
   try {
     const ata = await getAssociatedTokenAddress(TOKEN_MINT, publicKey, true);
     const balance = await connection.getTokenAccountBalance(ata);
@@ -156,4 +173,12 @@ async function getTokenBalance(publicKey: PublicKey) {
   }
 }
 
-export { initialize, createClaim, reviewClaim, withdrawMoney, getTaxAccountInfo, getTaxAccount, getTokenBalance };
+export {
+  initialize,
+  createClaim,
+  reviewClaim,
+  withdrawMoney,
+  getTaxAccountInfo,
+  getTaxAccount,
+  getTokenBalance,
+};

@@ -31,7 +31,7 @@ export function WithdrawFunds() {
         <div className="flex flex-col">
           <p className="text-md">Withdraw Funds</p>
           <p className="text-small text-default-500">
-            We will be charged applicable taxes when we withdraw funds
+            Withdrawing funds will pay the applicable taxes and update our tax account
           </p>
         </div>
       </CardHeader>
@@ -39,7 +39,7 @@ export function WithdrawFunds() {
       <Divider />
 
       <CardBody>
-        <Input type="number" placeholder="Amount" value={amount.toString()} onChange={(e) => setAmount(Number(e.target.value))} />
+        <Input type="number" placeholder="Amount" onChange={(e) => setAmount(Number(e.target.value))} />
       </CardBody>
 
       <Divider />
