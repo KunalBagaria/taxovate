@@ -2,7 +2,8 @@
     "scripts": {
         "lint:fix": "prettier */*.js \"*/**/*{.js,.ts}\" -w",
         "lint": "prettier */*.js \"*/**/*{.js,.ts}\" --check",
-        "test": "ANCHOR_PROVIDER_URL='http://127.0.0.1:8899' ANCHOR_WALLET='/Users/kunalbagaria/.config/solana/id.json' ts-mocha tests/taxovate.ts"
+        "test:local": "ANCHOR_PROVIDER_URL='http://127.0.0.1:8899' ANCHOR_WALLET='/Users/kunalbagaria/.config/solana/id.json' ts-mocha tests/taxovate.ts",
+        "test:devnet": "ANCHOR_PROVIDER_URL='https://api.devnet.solana.com' ANCHOR_WALLET='/Users/kunalbagaria/.config/solana/id.json' ts-mocha tests/taxovate.ts"
     },
     "dependencies": {
         "@coral-xyz/anchor": "^0.28.0",

@@ -1,14 +1,18 @@
 [features]
 seeds = false
 skip-lint = false
+
 [programs.localnet]
+taxovate = "5FCuQ3GBv3d1GWropp9t1fW6yLSnqBdSKFU3yfSCjC63"
+
+[programs.devnet]
 taxovate = "5FCuQ3GBv3d1GWropp9t1fW6yLSnqBdSKFU3yfSCjC63"
 
 [registry]
 url = "https://api.apr.dev"
 
 [provider]
-cluster = "Localnet"
+cluster = "Devnet"
 wallet = "/Users/kunalbagaria/.config/solana/id.json"
 
 [scripts]

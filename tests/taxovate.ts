@@ -9,7 +9,7 @@ describe("taxovate", () => {
   anchor.setProvider(anchor.AnchorProvider.env());
 
   // Replace as appropriate
-  const tokenMint = new anchor.web3.PublicKey("2fvRGJQyS3KYjnbpjVX4VcMW2MFG8m5CfW2UYJuLipoP");
+  const tokenMint = new anchor.web3.PublicKey("7Wzpi3AVu6t3RMB7DMNPWSfoQM3cQVKnq3ozZKz1Y54G");
   const govPoolOwner = new anchor.web3.PublicKey("AjsnLCea7MuBTu5YPi9FfegSJWGz2TByoMq6sLpH1PPr");
 
   const program = anchor.workspace.Taxovate as Program<Taxovate>;
@@ -99,8 +99,10 @@ describe("taxovate", () => {
   });
 
   it("Should make a withdrawal", async () => {
-    await withdrawMoney(100000, false);
+    await withdrawMoney(100000, true);
   });
+
+  // Run these at the end to make sure tax account is initialized and has the values added to it
 
   it("Should create a tax deduction claim", async () => {
     await createClaim(false);

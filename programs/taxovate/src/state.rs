@@ -34,8 +34,9 @@ impl Claim {
 
 // Replace values with your own:
 
-pub const GOV_ACCOUNTS: [&str; 1] = [
-  "GpEetfasA7J3kbERkBAqqas8vTTfTTkyUdSrS4DKQrq2"
+pub const GOV_ACCOUNTS: [&str; 2] = [
+  "GpEetfasA7J3kbERkBAqqas8vTTfTTkyUdSrS4DKQrq2",
+  "8kgbAgt8oedfprQ9LWekUh6rbY264Nv75eunHPpkbYGX"
 ];
 
-pub const GOV_POOL_ATA: &str = "459pLX5DTuo1uYaRax2jmKDsHTQw4o7VsL57NUoCSc1e";
+pub const GOV_POOL_ATA: &str = "9v4ie4jx7mk8uTgsSHsaixwkUu8j8QuHnuzfX9zwC9d4";
