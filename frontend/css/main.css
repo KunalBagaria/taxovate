@@ -1,0 +1,44 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+main {
+  @apply flex items-center justify-center min-h-screen flex-col;
+  background-color: #F6FAF2;
+  color: #02233A;
+}
+
+.lg-logo {
+  @apply w-64 mb-8
+}
+
+.sm-logo {
+  @apply w-32 mb-8 mt-8
+}
+
+.content {
+  @apply w-full h-screen flex items-center flex-col;
+}
+
+.max-w-container {
+  @apply max-w-6xl w-full h-full mt-8;
+  @apply pl-6 pr-6;
+}
+
+.content-child {
+  @apply w-full;
+  @apply flex flex-col items-start mt-16;
+  @apply gap-12;
+}
+
+.account-details {
+  @apply mt-16;
+}
+
+.account-info {
+  @apply mt-1 text-2xl;
+}
+
+.refresh-btn {
+  @apply mt-4;
+}
