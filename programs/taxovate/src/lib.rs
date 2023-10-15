@@ -29,7 +29,6 @@ pub mod taxovate {
 
     pub fn withdraw(ctx: Context<Withdraw>, amount: u64, bump: u8) -> Result<()> {
       let tax_account = &mut ctx.accounts.tax_account;
-      let transaction_amount = amount / 1_000_000; // 6 decimals for the Token
 
       // Check if the signer is the owner of the tax account
       if ctx.accounts.user.key() != tax_account.authority {
@@ -61,11 +60,10 @@ pub mod taxovate {
         authority: authority.to_account_info().clone(),
       };
 
-      let total_taxable_income = tax_account.taxed_income + transaction_amount;
+      let total_taxable_income = tax_account.taxed_income + amount;
       let tax_percentage_applicable = get_tax_percentage(total_taxable_income);
 
-      // Weird bug: why is this 0?
-      let total_tax_amount = (tax_percentage_applicable / 100) * total_taxable_income;
+      let total_tax_amount = (total_taxable_income * tax_percentage_applicable) / 100;
 
       let applicable_tax = if total_tax_amount == 0 {
         0
@@ -73,18 +71,16 @@ pub mod taxovate {
         total_tax_amount - tax_account.tax_paid
       };
 
-      let amount_main = transaction_amount - applicable_tax;
+      let amount_main = amount - applicable_tax;
+      let decimal_adjusted_amount = amount_main * 1_000_000; // 6 decimals of the token
+      let decimal_adjusted_tax = applicable_tax * 1_000_000; // 6 decimals of the token
 
       let cpi_program = token_program.to_account_info();
-      token::transfer(CpiContext::new_with_signer(cpi_program.clone(), cpi_accounts_tax, signer), applicable_tax)?;
-      token::transfer(CpiContext::new_with_signer(cpi_program.clone(), cpi_accounts_main, signer), amount_main)?;
-
-      // Update the tax account according to the withdrawl
-      tax_account.tax_paid += applicable_tax;
-      tax_account.taxed_income += amount_main;
+      token::transfer(CpiContext::new_with_signer(cpi_program.clone(), cpi_accounts_tax, signer), decimal_adjusted_tax)?;
+      token::transfer(CpiContext::new_with_signer(cpi_program.clone(), cpi_accounts_main, signer), decimal_adjusted_amount)?;
 
       msg!("Previously taxed income: {}", tax_account.taxed_income);
-      msg!("Total taxable income: {}", total_taxable_income);
+      msg!("Total taxable income now: {}", total_taxable_income);
       msg!("Tax percentage applicable: {}", tax_percentage_applicable);
 
       msg!("Total tax amount: {}", total_tax_amount);
@@ -92,6 +88,10 @@ pub mod taxovate {
 
       msg!("Applicable tax now: {}", applicable_tax);
       msg!("Amount transferred: {}", amount_main);
+
+      // Update the tax account according to the withdrawl
+      tax_account.tax_paid += applicable_tax;
+      tax_account.taxed_income += amount;
 
       Ok(())
 

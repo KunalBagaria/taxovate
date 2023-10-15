@@ -38,4 +38,4 @@ pub const GOV_ACCOUNTS: [&str; 1] = [
   "GpEetfasA7J3kbERkBAqqas8vTTfTTkyUdSrS4DKQrq2"
 ];
 
-pub const GOV_POOL_ATA: &str = "9Y9GgWAxLBxbGzE9FCGsd3Zggpp7MyL36BXzUCXr8kwa";
+pub const GOV_POOL_ATA: &str = "459pLX5DTuo1uYaRax2jmKDsHTQw4o7VsL57NUoCSc1e";

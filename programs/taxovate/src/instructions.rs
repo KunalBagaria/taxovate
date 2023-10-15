@@ -38,7 +38,7 @@ pub struct Withdraw<'info> {
 }
 
 #[derive(Accounts)]
-#[instruction(id: u64, tax_code: String, amount: u64, proof: String)]
+#[instruction(id: u64, tax_code: String, claim_amount: u64, on_income_amount: u64, proof: String)]
 pub struct CreateClaim<'info> {
     #[account(mut, seeds = [b"user".as_ref(), user.key().as_ref()], bump)]
     pub tax_account: Account<'info, TaxAccount>,

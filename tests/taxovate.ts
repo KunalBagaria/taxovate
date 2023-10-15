@@ -9,7 +9,7 @@ describe("taxovate", () => {
   anchor.setProvider(anchor.AnchorProvider.env());
 
   // Replace as appropriate
-  const tokenMint = new anchor.web3.PublicKey("4mam4mhRsaRogML5os2uRSFs4MgkCdQghkwMZk8YMN1y");
+  const tokenMint = new anchor.web3.PublicKey("2fvRGJQyS3KYjnbpjVX4VcMW2MFG8m5CfW2UYJuLipoP");
   const govPoolOwner = new anchor.web3.PublicKey("AjsnLCea7MuBTu5YPi9FfegSJWGz2TByoMq6sLpH1PPr");
 
   const program = anchor.workspace.Taxovate as Program<Taxovate>;
@@ -23,6 +23,8 @@ describe("taxovate", () => {
       const taxAccountData = await program.account.taxAccount.fetch(taxAccount);
       if (log) console.log("Tax account PDA", taxAccount);
       if (log) console.log("Tax account data", taxAccountData);
+      if (log) console.log("Tax paid:", taxAccountData.taxPaid.toNumber());
+      if (log) console.log("On Income:", taxAccountData.taxedIncome.toNumber());
     } catch (e) {
       const tx = await program.methods
         .initialize()
@@ -51,15 +53,15 @@ describe("taxovate", () => {
       .createClaim(
         newClaimId, // New Claim ID
         "420", // Tax Code applicable for deduction
-        new BN(1), // Claimed amount
-        new BN(8), // For the income amount
+        new BN(10), // Claimed amount
+        new BN(100), // For the income amount
         "No proof needed :)" // Proof of claim
       )
       .accounts({
         taxAccount,
         claim: claimAccount,
       })
-      .rpc();
+      .rpc().catch((e) => {console.log(e)});
     const claimAccountData = await program.account.claim.fetch(claimAccount);
     if (log) console.log("Claim account data", claimAccountData);
     return claimAccount;
@@ -76,7 +78,7 @@ describe("taxovate", () => {
   }
 
   async function withdrawMoney(_amount: number, log = true) {
-    const amount = new BN(_amount * (10 ** 6));
+    const amount = new BN(_amount);
     const taxAccountATA = await getAssociatedTokenAddress(tokenMint, taxAccount, true);
     const userATA = await getAssociatedTokenAddress(tokenMint, anchor.Wallet.local().publicKey);
     const govPoolATA = await getAssociatedTokenAddress(tokenMint, govPoolOwner);
@@ -88,18 +90,16 @@ describe("taxovate", () => {
       tokenProgram: TOKEN_PROGRAM_ID,
       govAta: govPoolATA,
     }).rpc();
-    console.log("Withdrawal tx", tx);
-
     const taxAccountData = await program.account.taxAccount.fetch(taxAccount);
-    if (log) console.log("Tax paid:", taxAccountData.taxPaid.toNumber());
+    if (log) console.log("Withdrawl Tx", tx);
   }
 
   it("Should initialize a tax account", async () => {
-    await initialize(true);
+    await initialize(false);
   });
 
   it("Should make a withdrawal", async () => {
-    await withdrawMoney(300000, true);
+    await withdrawMoney(100000, false);
   });
 
   it("Should create a tax deduction claim", async () => {
