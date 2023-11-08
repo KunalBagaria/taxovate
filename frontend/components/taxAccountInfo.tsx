@@ -52,7 +52,14 @@ export function TaxInfo() {
           <h1 className="account-info">Claims Created: {claims}</h1>
         </div>
       )}
-      <Button className="refresh-btn" color="primary" onClick={update}>Fetch Account</Button>
+
+      {!account && (
+        <div className="account-details">
+          <p>Only fetch the account once initialized</p>
+        </div>
+      )}
+
+      <Button className="refresh-btn" color="primary" onClick={update}>Refresh Account</Button>
     </>
   );
 }

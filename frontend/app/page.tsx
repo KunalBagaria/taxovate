@@ -10,6 +10,7 @@ import { InitializeTaxAccount } from "#/components/initialize";
 import { TaxInfo } from "#/components/taxAccountInfo";
 import { WithdrawFunds } from "#/components/withdraw";
 import { SubmitClaim } from "#/components/claims";
+import { RequestTestTokens } from "#/components/requestTokens";
 
 const fontPoppins = Poppins({
   subsets: ["latin"],
@@ -39,10 +40,13 @@ export default function Page() {
               <TaxInfo />
 
               <div className="content-child">
+                <RequestTestTokens />
                 <InitializeTaxAccount />
                 <WithdrawFunds />
                 <SubmitClaim />
               </div>
+
+
             </div>
           </div>
         )}
