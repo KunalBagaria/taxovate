@@ -40,8 +40,8 @@ export default function Page() {
               <TaxInfo />
 
               <div className="content-child">
-                <RequestTestTokens />
                 <InitializeTaxAccount />
+                <RequestTestTokens />
                 <WithdrawFunds />
                 <SubmitClaim />
               </div>

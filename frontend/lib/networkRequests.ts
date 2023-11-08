@@ -14,6 +14,8 @@ async function requestTokens(publicKey: string) {
     loading: 'Requesting Token Transfer',
     success: 'Successfully Transferred',
     error: 'Error while transferring'
+  }, {
+    position: 'top-left'
   })
   const response = await request;
   const data = await response.json();

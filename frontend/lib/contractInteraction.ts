@@ -3,7 +3,7 @@ import { BN } from "bn.js";
 import { Program } from "@coral-xyz/anchor";
 import { Connection, PublicKey } from "@solana/web3.js";
 import { AnchorWallet } from "@solana/wallet-adapter-react";
-import { getAssociatedTokenAddress, TOKEN_PROGRAM_ID } from "@solana/spl-token";
+import { createAssociatedTokenAccountInstruction, getAssociatedTokenAddress, getAssociatedTokenAddressSync, TOKEN_PROGRAM_ID } from "@solana/spl-token";
 import {
   TOKEN_MINT,
   GOV_POOL_OWNER,
@@ -52,20 +52,44 @@ async function initialize(log = true, wallet: AnchorWallet) {
     if (log) console.log("On Income:", taxAccountData.taxedIncome.toNumber());
     toast.success("Tax Account already initialized", { position: "top-left" });
   } catch (e) {
+    const connection = new Connection("https://api.devnet.solana.com");
     const program = getProgram(wallet);
     const { taxAccount } = await getTaxAccount(wallet);
-    const tx = await program.methods
+    const transaction = await program.methods
       .initialize()
       .accounts({
         taxAccount,
       })
-      .rpc();
+      .transaction();
+
+    // init token accounts
+    const pdaTokenAccountAddress = getAssociatedTokenAddressSync(
+      TOKEN_MINT,
+      taxAccount,
+      true
+    );
+    const userTokenAccountAddress = getAssociatedTokenAddressSync(
+      TOKEN_MINT,
+      wallet.publicKey
+    );
+    transaction.add(
+      createAssociatedTokenAccountInstruction(wallet.publicKey, pdaTokenAccountAddress, taxAccount, TOKEN_MINT)
+    );
+    transaction.add(
+      createAssociatedTokenAccountInstruction(wallet.publicKey, userTokenAccountAddress, wallet.publicKey, TOKEN_MINT)
+    );
+    transaction.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
+    transaction.feePayer = wallet.publicKey;
+
+    // sign and send transaction
+    const signedTransaction = await wallet.signTransaction(transaction);
+    const tx = await connection.sendRawTransaction(signedTransaction.serialize());
     console.log("Initialize Tx", tx);
     window.open(
       "https://explorer.solana.com/tx/" + tx + "?cluster=devnet",
       "_blank"
     );
-    toast.success("Initialized Tax Account");
+    toast.success("Initialized Tax Accounts");
   }
 }
 

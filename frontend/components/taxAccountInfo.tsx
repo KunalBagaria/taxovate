@@ -53,12 +53,6 @@ export function TaxInfo() {
         </div>
       )}
 
-      {!account && (
-        <div className="account-details">
-          <p>Only fetch the account once initialized</p>
-        </div>
-      )}
-
       <Button className="refresh-btn" color="primary" onClick={update}>Refresh Account</Button>
     </>
   );
